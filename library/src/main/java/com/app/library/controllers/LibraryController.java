@@ -28,14 +28,25 @@ public class LibraryController {
 
     // ==================== Book Endpoints ====================
 
-    // Get all books
     @GetMapping("/books")
-    public ResponseEntity<Collection<Book>> getAllBooks() {
-        Collection<Book> books = libraryService.getAllBooks();
-        logger.info("The list of books returned"+books);
-        return new ResponseEntity<>(books, HttpStatus.OK);
+    public ResponseEntity<Collection<Book>> getBooks(
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String genre) {
+        if (author!=null &&  genre!=null) {
+            Collection<Book> books = libraryService.getBooksByAuthorAndGenre(author, genre);
+            logger.info("The books retrieved for the author and genre "+author+" - " + genre);
+            return new ResponseEntity<>(books, HttpStatus.OK);
+        } else if (author!=null) {
+            Collection<Book> books = libraryService.getBooksByAuthorAndGenre(author, null);
+            logger.info("The books retrieved for the author "+author);
+            return new ResponseEntity<>(books, HttpStatus.OK);
+        } else {
+            Collection<Book> books = libraryService.getAllBooks();
+            logger.info("All the books retrieved");
+            return new ResponseEntity<>(books, HttpStatus.OK);
+        }
     }
-
+    
     // Get a book by ID
     @GetMapping("/books/{id}")
     public ResponseEntity<Book> getBookById(@PathVariable Long id) {
@@ -160,5 +171,43 @@ public class LibraryController {
         libraryService.returnBook(recordId, LocalDate.now());
         logger.info("The book has been retrieved "+recordId);
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+
+        @GetMapping("/books/genre")
+    public ResponseEntity<Collection<Book>> getBooksByGenre(
+            @RequestParam String genre) {
+        Collection<Book> books = libraryService.getBooksByGenre(genre);
+        logger.info("The books retrieved for genre "+genre);
+        return new ResponseEntity<>(books, HttpStatus.OK);
+    }
+
+    @GetMapping("/books/author/{author}")
+    public ResponseEntity<Collection<Book>> checkGenreForAuthor(
+            @PathVariable String author,
+            @RequestParam(required = false) String genre) {
+
+        Collection<Book> books = libraryService.getBooksByAuthorAndGenre(author, genre);
+        logger.info("The books retrieved for the author and genre "+author+" - " + genre);
+        return new ResponseEntity<>(books, HttpStatus.OK);
+    }
+
+    @GetMapping("/books/dueondate")
+    public ResponseEntity<Collection<Book>> getBooksDueOnDate(
+            @RequestParam("dueDate") @DateTimeFormat(pattern = "dd/MM/yyyy") LocalDate dueDate) {
+        Collection<Book> books = libraryService.getBooksDueOnDate(dueDate);
+        logger.info("The books retrieved by due date "+dueDate);
+        return new ResponseEntity<>(books, HttpStatus.OK);
+    }
+
+    @GetMapping("/bookavailabileDate")
+    public ResponseEntity<LocalDate> checkAvailability(
+            @RequestParam Long bookId) {
+        LocalDate avlDate = libraryService.checkAvailability(bookId);
+        if(avlDate == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } else {
+            return new ResponseEntity<>(avlDate, HttpStatus.OK);
+        }
     }
 }
